@@ -1099,6 +1099,7 @@ sub query_stack
 {
     my $class = shift;
     $class = ref $class || $class;
+    $::MKD_lib_sql_Table_QUERY_STACK ||= [];
     
     if (@_ == 0) { return @{$::MKD_lib_sql_Table_QUERY_STACK} }
     else

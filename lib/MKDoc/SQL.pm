@@ -12,7 +12,7 @@ use MKDoc::SQL::Table;
 use MKDoc::SQL::Exception;
 use MKDoc::SQL::Type::ALL;
 
-our $VERSION = '0.1';
+our $VERSION = '0.2';
 
 
 =head1 NAME

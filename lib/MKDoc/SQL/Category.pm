@@ -1,3 +1,10 @@
+package MKDoc::SQL::Category;
+use MKDoc::SQL::Exception;
+use MKDoc::SQL::Condition;
+use strict;
+
+use base qw /MKDoc::SQL::Table/;
+
 =head1 NAME
 
 MKDoc::SQL::Category - Hierarchical ordrered category table object.

@@ -36,14 +36,11 @@ on the index table and quickly retrieve records.
   );
 
 =cut
-
 package MKDoc::SQL::IndexedTable;
 use MKDoc::SQL::Exception;
-use MKDoc::SQL::Table;
 use strict;
 
-use vars qw /@ISA/;
-@ISA = qw /MKDoc::SQL::Table/;
+use base qw /MKDoc::SQL::Table/;
 
 
 ##
