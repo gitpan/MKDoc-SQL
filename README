@@ -1,0 +1,30 @@
+MKDoc::SQL - MKDoc SQL abstraction layer
+========================================
+
+Yet another database abstraction layer with a few original features such
+as the 'hierarchical ordered category' table type or the IndexedTable
+weighted keyword search.
+
+This stuff has been in production for a few years so it should be working.
+
+
+INSTALLATION
+
+To install this module type the following:
+
+  perl Makefile.PL
+  make
+  make test
+  make install
+
+Or better, use CPAN.pm
+
+
+COPYRIGHT AND LICENCE
+
+  This module free software and is distributed under the
+  same license as Perl itself.
+
+  Copyright (C) 2003 MKDoc Holdings Ltd.
+
+  Author: Jean-Michel Hiver <jhiver@mkdoc.com>
