@@ -11,7 +11,6 @@ on a given table.
 
 =cut
 package MKDoc::SQL::Query;
-use MKDoc::SQL::Exception;
 use Encode;
 use strict;
 use vars qw /$IMPORTED/;

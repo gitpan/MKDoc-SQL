@@ -18,7 +18,6 @@ compiles "MKDoc::SQL::IndexedTable";
 compiles "MKDoc::SQL::MySQL";
 compiles "MKDoc::SQL::Query";
 compiles "MKDoc::SQL::Table";
-compiles "MKDoc::SQL::Exception";
 compiles "MKDoc::SQL::Type::BigInt";
 compiles "MKDoc::SQL::Type::ALL";
 compiles "MKDoc::SQL::Type::AbstractFloat";

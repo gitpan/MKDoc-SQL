@@ -1,9 +1,9 @@
 package MKDoc::SQL::Category;
-use MKDoc::SQL::Exception;
 use MKDoc::SQL::Condition;
 use strict;
 
 use base qw /MKDoc::SQL::Table/;
+
 
 =head1 NAME
 
@@ -91,7 +91,7 @@ sub new
 ##
 # $obj->modify ($category);
 # -------------------------
-#   Modifies $category, making any changes that would be
+# Modifies $category, making any changes that would be
 # necessary on the categories beneath this one.
 ##
 sub modify
@@ -107,8 +107,8 @@ sub modify
     my $new_category = undef;
     if (ref $_[0])
     {
-	if (ref $_[0] eq 'CGI') { $new_category = $self->_to_hash (shift) }
-	else                    { $new_category = shift }
+        if (ref $_[0] eq 'CGI') { $new_category = $self->_to_hash (shift) }
+        else                    { $new_category = shift }
     }
     else { $new_category = { @_ } }
 
@@ -117,20 +117,22 @@ sub modify
     # Mon May 20 13:06:02 BST 2002 - JM.Hiver
     foreach my $col (keys %{$new_category})
     {
-	my $val = $new_category->{$col};
-	next unless (defined $val);
-	$val =~ s/[\x00-\x08]//g;
-	$val =~ s/[\x0B-\x0C]//g;
-	$val =~ s/[\x0E-\x1F]//g;
+        my $val = $new_category->{$col};
+        next unless (defined $val);
+        $val =~ s/[\x00-\x08]//g;
+        $val =~ s/[\x0B-\x0C]//g;
+        $val =~ s/[\x0E-\x1F]//g;
 	$new_category->{$col} = $val;
     }
     
     # build the condition to search for the old record
     # by copying primary key values into a hashref.
     my @pk = $self->pk;
-    @pk or throw (new MKDoc::SQL::Exception ( code => "NO_PRIMARY_KEY",
-				       info => "The current record cannot be modified because " .
-				               "its table has no pk." ) );
+    @pk or die join " : ", (
+        "NO_PRIMARY_KEY",
+        "Record cannot be modified",
+        __FILE__, __LINE__
+    );
     
     # builds the condition from the record and changes
     # the values.
@@ -140,66 +142,56 @@ sub modify
     # throw an exception otherwise.
     foreach my $field (keys %{$condition})
     {
-        unless (defined $condition->{$field})
-        {
-            throw (new MKDoc::SQL::Exception ( code => "INCOMPLETE_PK",
-					info => "One of the condition value is not defined for this modify.") );
-        }
+        defined $condition->{$field} || die join " : ", (
+            "INCOMPLETE_PK",
+            "One of the primary key fields is not defined",
+            __FILE__, __LINE__
+        );
     }
     
     my $old_category = $self->search ($condition)->next;
 
-    unless (defined $old_category)
-    {
-	throw (new MKDoc::SQL::Exception ( code => "RECORD_DOES_NOT_EXIST",
-				    info => "The category that you want to modify does not exist." ) );
-    }
+    defined $old_category || die join " : ", (
+        "RECORD_DOES_NOT_EXIST",
+        "This category does not seem to exist",
+        __FILE__, __LINE__
+    );
     
     # if the category has to move elsewhere than the root
     # then we should perform a few checks
-    if (defined $new_category->{$Parent_ID})
-    {
-	# if the father is the category itself, throw an exception
-	if ( $new_category->{$Parent_ID} == $new_category->{$ID} )
-	{
-	    throw (new MKDoc::SQL::Exception ( code => "ILLEGAL_MODIFICATION",
-					info => {
-					    msg => "It is not possible to move a category into itself",
-					    category_id => $new_category->{$ID},
-					    category_parent => $new_category->{$ID}
-					} ) );
-	}
-	
-	# let us grab the category in which we want to move
-	my $move_to = $self->search ( $ID => $new_category->{$Parent_ID} )->next;
-	unless (defined $move_to)
-	{
-	    throw (new MKDoc::SQL::Exception ( code => "ILLEGAL_MODIFICATION",
-					info => "The category to move into does not exist" ) );
-	}
+    defined $new_category->{$Parent_ID}
+        and $new_category->{$Parent_ID} != $old_category->{$Parent_ID}
+        and do {
 
-	my $qold = quotemeta ($old_category->{$Full_Path});
-	if ($move_to->{$self->{category_path}} =~ /^$qold.*/)
-	{
-	    throw (new MKDoc::SQL::Exception ( code => "ILLEGAL_MODIFICATION",
-					info => {
-					    msg => "Cannot move a category into one of its sub-categories",
-					    category => $old_category->{$Full_Path},
-					    move_to  => $move_to->{$Full_Path}
-					} ) );
-	}
-    }
-    
+        # let's check that we don't want to move into self
+	$new_category->{$Parent_ID} == $new_category->{$ID} and die join " : ", (
+            "ILLEGAL_MODIFICATION",
+            "It is not possible to move a category into itself",
+            __FILE__, __LINE__
+        );
+ 
+	# let us grab the category in which we want to move
+	my $move_to = $self->get ( $new_category->{$Parent_ID} ) || die join " : ", (
+            "ILLEGAL_MODIFICATION",
+            "The category to move into does not exist",
+            __FILE__, __LINE__
+        );
+
+        # make sure that we don't want to move into a child category
+	my $qold = quotemeta ( $old_category->{$Full_Path} );
+	$move_to->{$self->{category_path}} =~ /^$qold.*/ and die join " : ", (
+            "ILLEGAL_MODIFICATION",
+            "Cannot move a category into one of its sub-categories",
+            __FILE__, __LINE__
+        );
+    };
+     
     # updates the category attributes, provided that it changed
-    try {
-	$self->_modify_position ($new_category, $old_category);
-    }
-    catch {
-	my $exception = shift;
-	if ($exception->{code} eq 'CANNOT_GET_SWITCH_CATEGORY')
-	{
-	    $self->_stack_children_position ($new_category->{$Parent_ID});
-	}
+    eval { $self->_modify_position ($new_category, $old_category) };
+    $@ and do {
+        ($@ =~ /CANNOT_GET_SWITCH_CATEGORY/) ?
+            $self->_stack_children_position ( $new_category->{$Parent_ID} ) :
+            die $@;
     };
     
     # updates the category name, provided that it has changed
@@ -242,13 +234,13 @@ sub _modify_position
     {
 	# gets the category which has the same parent and the desired position
 	my $switch = $self->get (
-				 $Parent_ID => $new->{$Parent_ID},
-				 $Position  => $new->{$Position}
-				 );
-	
-	# complain if there's no category to switch with
-	throw ( new MKDoc::SQL::Exception ( code => 'CANNOT_GET_SWITCH_CATEGORY', info => $new ) ) unless (defined $switch);
-	
+	    $Parent_ID => $new->{$Parent_ID},
+	    $Position  => $new->{$Position}
+	) || die join " : ", (
+            "CANNOT_GET_SWITCH_CATEGORY",
+            __FILE__, __LINE__
+        );
+        
 	$switch->{$Position} = $old->{$Position};
 	$self->SUPER::modify ($switch);
     }
@@ -258,17 +250,16 @@ sub _modify_position
 ##
 # $obj->_modify_name ($new_category, $old_category);
 # --------------------------------------------------
-#   When the name of a Category changes, its path
-# changes too. This means that by the same time, the
-# path of all the categories beneath it changes as
-# well.
+# When the name of a Category changes, its path changes too.
+# This means that by the same time, the path of all the categories
+# beneath it changes as well.
 ##
 sub _modify_name
 {
     my $self = shift;
     my $new  = shift;
     my $old  = shift;
-    
+   
     my $ID = $self->{category_id};
     my $Parent_ID = $self->{category_parent};
     my $Name = $self->{category_name};
@@ -282,19 +273,22 @@ sub _modify_name
 	# if the Parent_ID has changed too, then _modify_location will
 	# perform and it'll avoid data corruption. Fix 2001.03.04
 	return if ($new->{$Parent_ID} ne $old->{$Parent_ID});
-	
+
 	# if the name has changed, then the path must change as well.
 	# not only for this category, but also for all the sub-categories
 	my $old_path = $old->{$Full_Path};
 	my $new_path = $old_path;
-	
+
+        my $to_remove   = quotemeta ("/$old_name/");
+        my $replacement = "/$new_name/";
+
 	# replace /blah/blah.../old_name by /blah/blah.../new_name
-	$new_path =~ s/\Q$old_name\/\E$/$new_name\//;
-	
+	$new_path =~ s/$to_remove/$replacement/;
+
 	# select all the categories beneath the current category,
 	# i.e. the path of which starts by $old_path/
 	my $condition = new MKDoc::SQL::Condition;
-	$condition->add ($self->{category_path}, 'LIKE', $old_path . "_%");
+	$condition->add ($Full_Path, 'LIKE', $old_path . "_%");
 	my $query = $self->search ($condition);
 	
 	# for each category, modify the path
@@ -304,7 +298,7 @@ sub _modify_name
 	    $self->SUPER::modify ($beneath_category);
 	}
 	
-	$new->{$self->{category_path}} = $new_path;
+	$new->{$Full_Path} = $new_path;
 	$self->SUPER::modify ($new);
     }
 }
@@ -412,6 +406,14 @@ sub insert
     
     $self->_compute_path ($insert);
     $self->_insert_compute_position ($insert);
+
+    # make sure there is no other category with the same path
+    $self->get ( $Full_Path => $insert->{$Full_Path} ) and die join " : ", (
+        'CANNOT_INSERT',
+        "$Full_Path $insert->{$Full_Path} already exists",
+        __FILE__ , __LINE__
+    );
+
     return $self->SUPER::insert ($insert);
 }
 
@@ -639,11 +641,11 @@ sub _compute_path
     else
     {
 	my $parent_cat = $self->search ( $ID => $cat->{$Parent_ID} )->next;
-	unless (defined $parent_cat)
-	{
-	    throw (new MKDoc::SQL::Exception ( code => "PARENT_DOES_NOT_EXIST",
-					info => "This parent category does not exist." ) );	
-	}
+	$parent_cat || die join " : ", (
+            "PARENT_DOES_NOT_EXIST",
+            "This parent category does not exist.",
+            __FILE__, __LINE__
+        );
 	$cat->{$Full_Path} = $parent_cat->{$Full_Path} . $cat->{$Name} . '/';
     }
 }

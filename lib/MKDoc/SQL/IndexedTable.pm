@@ -37,7 +37,6 @@ on the index table and quickly retrieve records.
 
 =cut
 package MKDoc::SQL::IndexedTable;
-use MKDoc::SQL::Exception;
 use strict;
 
 use base qw /MKDoc::SQL::Table/;
@@ -113,11 +112,11 @@ sub delete
     else                    { $condition = new MKDoc::SQL::Condition ( @_ ) };
     my $condition_sql = $condition->to_sql;
     
-    unless ($condition_sql)
-    {
-        throw (new MKDoc::SQL::Exception ( code => "NO_CONDITION",
-				    info => "delete cannot be called without a condition, use erase instead" ) );
-    }
+    $condition_sql || die join " : ", (
+        "NO_CONDITION",
+        "delete cannot be called without a condition, use erase instead",
+        __FILE__, __LINE__
+    );
     
     $self->_delete_index ($condition);
     $self->SUPER::delete ($condition);
@@ -170,12 +169,10 @@ sub modify
     # if the current table has no primary keys, then
     # modify cannot be performed.
     my @pk = $self->pk;
-    @pk or throw (new MKDoc::SQL::Exception ( code => 'NO_PRIMARY_KEY',
-                                       info => $self ) );
+    @pk or die join " : ", ( 'NO_PRIMARY_KEY', __FILE__, __LINE__ ); 
+
     my $id_col = $self->pk->[0];
-    defined ($modify->{$id_col}) or
-	throw (new MKDoc::SQL::Exception ( code => 'PRIMARY_KEY_UNDEFINED',
-				    info => $self ) );
+    defined ($modify->{$id_col}) or die join " : ", ('PRIMARY_KEY_UNDEFINED', __FILE__, __LINE__);
     my $id = $modify->{$id_col};
     
     # builds the condition from the record and changes
@@ -184,8 +181,7 @@ sub modify
     
     # retrieve the old record.
     my $old_record = $self->get ($condition) or
-	throw (new MKDoc::SQL::Exception ( code => 'CANNOT_GET_RECORD',
-				    info => $self ) );
+        die join " : ", ('CANNOT_GET_RECORD', __FILE__, __LINE__);
 
     # get the index table on which we'll perform operations.
     my $index_table = $self->_side_table;
@@ -259,11 +255,11 @@ sub update
     # throw an exception otherwise.
     foreach my $update_col (keys %{$hashref})
     {
-        unless (defined $self->cols ($update_col))
-        {
-            throw (new MKDoc::SQL::Exception ( code => "NO_SUCH_COLUMN",
-					info => "$update_col does not exist in $name" ) );
-        }
+        defined $self->cols ($update_col) or die join " : ", (
+            "NO_SUCH_COLUMN",
+	    "$update_col does not exist in $name",
+            __FILE__, __LINE__
+        );
     }
     my $condition = new MKDoc::SQL::Condition (shift);
     

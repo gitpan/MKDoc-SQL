@@ -9,10 +9,9 @@ use MKDoc::SQL::IndexedTable;
 use MKDoc::SQL::MySQL;
 use MKDoc::SQL::Query;
 use MKDoc::SQL::Table;
-use MKDoc::SQL::Exception;
 use MKDoc::SQL::Type::ALL;
 
-our $VERSION = '0.2';
+our $VERSION = '0.3';
 
 
 =head1 NAME

@@ -13,7 +13,6 @@
 #
 # -------------------------------------------------------------------------------------
 package MKDoc::SQL::MySQL;
-use MKDoc::SQL::Exception;
 use MKDoc::SQL::Condition;
 use MKDoc::SQL::Query;
 use MKDoc::SQL::DBH;
@@ -61,9 +60,7 @@ sub erase
     my $sql  = qq |DELETE FROM $name WHERE 1 > 0|;
     $class->query_stack ($sql);
     $@ = undef;
-    $dbh->do ($sql) or
-	throw (new MKDoc::SQL::Exception ( code => "CANNOT_DO",
-				    info => $@ ) );
+    $dbh->do ($sql) or die join " : ", ("CANNOT_DO", $@, __FILE__, __LINE__);
 }
 
 
@@ -146,16 +143,13 @@ sub _select
     $class->query_stack ($sql);
     
     $@ = undef;
-    my $sth = $dbh->prepare ($sql) or
-	throw (new MKDoc::SQL::Exception ( code => "CANNOT_PREPARE",
-				    info   => $@ ) );
+    my $sth = $dbh->prepare ($sql) or die join " : ", ('CANNOT_PREPARE', $@, __FILE__, __LINE__);
     
     eval { $sth->execute() };
     $@ and do {
 	print Carp::cluck ("Cannot execute: $@");
         print STDERR join "\n\n", $class->query_stack();
-	throw (new MKDoc::SQL::Exception ( code   => "CANNOT_EXECUTE",
-			            info   => $@ ) );
+	die join " : ", ('CANNOT_EXECUTE', $@, __FILE__, __LINE__);
     };
     
     return new MKDoc::SQL::Query (sth => $sth, bless_into => $self->{bless_into});
@@ -180,9 +174,7 @@ sub _delete
     my $dbh = MKDoc::SQL::DBH->get;
     $class->query_stack ($sql);
     $@ = undef;
-    $dbh->do ($sql) or
-	throw (new MKDoc::SQL::Exception ( code => "CANNOT_DO",
-				    info => $@ ) );
+    $dbh->do ($sql) or die join " : ", ("CANNOT_DO", $@, __FILE__, __LINE__);
 }
 
 
@@ -259,9 +251,7 @@ sub _insert
     if ($self->ai)
     {
 	$self->lock;
-        $dbh->do ($sql) or
-            throw (new MKDoc::SQL::Exception ( code   => "CANNOT_DO",
-                                        info   => $@ ) );
+        $dbh->do ($sql) or die join " : ", ("CANNOT_DO", $@, __FILE__, __LINE__);
         my $ai_name = $self->pk->[0];
         my $sth = $dbh->prepare ("SELECT MAX($ai_name) FROM $name");
         $sth->execute;
@@ -270,9 +260,7 @@ sub _insert
     }
     else
     {
-        $dbh->do ($sql) or
-            throw (new MKDoc::SQL::Exception ( code   => "CANNOT_DO",
-                                        info   => $@ ) );
+        $dbh->do ($sql) or die join " : ", ("CANNOT_DO", $@, __FILE__, __LINE__);
         return;
     }
 }
@@ -306,9 +294,7 @@ sub _update
     
     $class->query_stack ($sql);
     $@ = undef;
-    $dbh->do ($sql) or
-	throw (new MKDoc::SQL::Exception ( code   => "CANNOT_DO",
-				    info   => $@ ) );
+    $dbh->do ($sql) or die join " : ", ("CANNOT_DO", $@, __FILE__, __LINE__);
 }
 
 
@@ -381,11 +367,7 @@ sub create
     
     my $dbh = MKDoc::SQL::DBH->get;
     $@ = undef;
-    unless (defined $dbh->do ($sql))
-    {
-	throw (new MKDoc::SQL::Exception ( code   => "CANNOT_DO",
-				    info   => $@ ) );
-    }
+    defined $dbh->do ($sql) or die join " : ", ("CANNOT_DO", $@, __FILE__, __LINE__);
 }
 
 
@@ -405,9 +387,7 @@ sub drop
     $class->query_stack ($sql);
 
     $@ = undef;
-    $dbh->do ($sql) or
-	throw (new MKDoc::SQL::Exception ( code => "CANNOT_DROP",
-				    info   => $@ ) );
+    $dbh->do ($sql) or die join " : ", ("CANNOT_DROP", $@, __FILE__, __LINE__);
 }
 
 

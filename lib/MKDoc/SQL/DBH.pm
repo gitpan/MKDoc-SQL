@@ -1,36 +1,6 @@
 package MKDoc::SQL::DBH;
-use CGI::Carp;
 use DBI;
 use strict;
-
-$::S_MKD_lib_sql_DBH_ETERNAL = undef;
-$::S_MKD_lib_sql_DBH_DBH     = undef;
-
-sub _ETERNAL_()
-{
-    my $dir = $ENV{SITE_DIR} || 'nositedir';
-    my $val = $::S_MKD_lib_sql_DBH_ETERNAL->{$dir};
-    return $val;
-}
-
-sub _SET_ETERNAL_($)
-{
-    my $dir = $ENV{SITE_DIR} || 'nositedir';
-    $::S_MKD_lib_sql_DBH_ETERNAL->{$dir} = shift;
-}
-
-sub _DBH_()
-{
-    my $dir = $ENV{SITE_DIR} || 'nositedir';
-    my $val = $::S_MKD_lib_sql_DBH_DBH->{$dir};
-    return $val;
-}
-
-sub _SET_DBH_($)
-{
-    my $dir = $ENV{SITE_DIR} || 'nositedir';
-    $::S_MKD_lib_sql_DBH_DBH->{$dir} = shift;
-}
 
 
 ##
@@ -43,13 +13,9 @@ sub spawn
 {
     my $class = shift;
     $class = ref $class || $class;
-    
-    my $self = _ETERNAL_;
-    defined ($self) and return $self;
-    
-    $self = bless { @_ }, $class;
-    _SET_ETERNAL_ $self;
-    return $self;
+
+    $::MKD_SQL_DBH ||= bless { @_ }, $class;
+    return $::MKD_SQL_DBH;
 }
 
 
@@ -57,11 +23,12 @@ sub spawn
 sub get
 {
     my $self = shift;
-    if (not defined $self or not ref $self) { $self = _ETERNAL_ }
+
+    if (not defined $self or not ref $self) { $self = $self->spawn() }
     defined $self or
-	confess "Cannot return \$dbh because $self has not been spawned";
+	die "Cannot return \$dbh because $self has not been spawned";
     
-    defined _DBH_ and return _DBH_;
+    $::MKD_DBH and return $::MKD_DBH;
     
     my $driver   = $self->{driver}   || "mysql";
     my $database = $self->{database} || "test";
@@ -70,14 +37,14 @@ sub get
 	
     my $user     = $self->{user}     || "root";
     my $password = $self->{password} || undef;
-    $database or confess 
+    $database or die 
 	"Cannot return \$dbh because no database name was specified";
     
     my $dsn = undef;
     if ($driver eq 'mysql') { $dsn = "DBI:$driver:database=$database" }
     else
     {
-	confess "Driver $driver is not supported by " . ref $self . "!";
+	die "Driver $driver is not supported by " . ref $self . "!";
     }
     
     $dsn   .= ":host=$host" if (defined $host and $host);
@@ -90,10 +57,10 @@ sub get
     };
     
     (defined $@ and $@) and
-	confess "Cannot connect: $@";
-    
-    _SET_DBH_ $dbh;
-    return $dbh;
+	die "Cannot connect: $@";
+   
+    $::MKD_DBH = $dbh;
+    return $::MKD_DBH; 
 }
 
 
@@ -101,16 +68,16 @@ sub get
 sub kill
 {
     disconnect();
-    _SET_DBH_     (undef);
-    _SET_ETERNAL_ (undef);
+    $::MKD_DBH = undef;
+    $::MKD_SQL_DBH = undef;
 }
 
 
 # destroy the dababase handlers
 sub disconnect
 {
-    if (defined _DBH_) { _DBH_->disconnect };
-    _SET_DBH_ (undef);
+    $::MKD_DBH && $::MKD_DBH->disconnect();
+    $::MKD_DBH = undef;
 }
 
 
@@ -120,7 +87,7 @@ sub freeze
     my @res = ("# database connection information",
 	       "# ---", "");
     
-    my $obj = _ETERNAL_;
+    my $obj = $::MKD_SQL_DBH;
     
     # if the object is defined, then we write some Perl
     # code that's gonna restore its state later

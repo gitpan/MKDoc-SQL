@@ -1,5 +1,12 @@
 Revision history for MKDoc::SQL 
 
+0.3 Tue Mar 23 16:59:16 2004
+    - Removed MKDoc::SQL::Exception
+    - Fixed another bug in MKDoc::SQL::Category
+    - Added test suite
+    - Added MKDoc::Setup::SQL install script
+    - Added MKDoc::Init::DBI initialization handler
+
 0.2 Thu Mar 18 14:18:50 2004
     - Fixed some MKDoc::SQL::Category issues
     - Fixed some code to make the lib work OK with MKDoc::Core
