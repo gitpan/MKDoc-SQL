@@ -1,7 +1,41 @@
+=head1 NAME
+
+MKDoc::Setup::SQL - Install MKDoc::SQL on an MKDoc::Core site.
+
+
+=head1 REQUIREMENTS
+
+=head2 MKDoc::Core
+
+Make sure you have installed L<MKDoc::Core> on your system with at least one
+L<MKDoc::Core> site.  Please refer to L<MKDoc::Core::Article::Install> for
+details on how to do this.
+
+=head2 A working MySQL database
+
+You need access to a MySQL server. You will need a database I<per site> for
+which you want to deploy L<MKDoc::SQL> on.
+
+
+=head1 INSTALLING
+
+Once you know the connection parameters of your database (database name,
+database user, database password, database host and database port),
+installation should be very easy:
+
+  source /path/to/site/mksetenv.sh
+  perl -MMKDoc::Setup -e install_sql
+
+That's it! The install script will prompt you for the database connection
+parameters, test that it can connect to the database and finally write that
+connection information in your site directory.
+
+=cut
 package MKDoc::Setup::SQL;
 use strict;
 use warnings;
 use File::Spec;
+use File::Touch;
 use MKDoc::SQL;
 use base qw /MKDoc::Setup/;
 
@@ -156,6 +190,9 @@ EOF
 
     close FP;
     print "Wrote $dir/su/driver.pl\n";
+
+    File::Touch::touch ("$dir/init/10000_MKDoc::SQL::Init::DBI");
+    print "Added $dir/init/10000_MKDoc::SQL::Init::DBI\n";
     exit (0);
 }
 

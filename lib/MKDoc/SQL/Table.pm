@@ -10,7 +10,6 @@ package MKDoc::SQL::Table;
 use Data::Dumper;
 use MKDoc::SQL::Condition;
 use MKDoc::SQL::Query;
-use Carp;
 use strict;
 
 $::S_MKD_lib_sql_Table_DATABASE        = {};
@@ -94,7 +93,7 @@ sub new
     # sets the table name
     $self->{name} = $args->{name};
     (defined $self->{name}) or
-	confess "Cannot construct $class without a name attribute";
+	die "Cannot construct $class without a name attribute";
     
     # sets the columns
     $args->{cols} ||= [];
@@ -226,7 +225,7 @@ sub load_state
     
     # loads each definition file
     opendir DD, $dir or
-	confess "Can't open directory $dir";
+	die "Can't open directory $dir";
     my @files = readdir (DD);
     closedir DD;
     
@@ -241,13 +240,13 @@ sub load_state
 	if ($file =~ /\.def$/)
 	{
 	    open FP, "<$path" or
-		confess "Cannot read-open $path";
+		die "Cannot read-open $path";
 	    my $data = join '', <FP>;
 	    close FP;
 	    
 	    my $VAR1;
 	    eval $data;
-	    (defined $@ and $@) and confess $@;
+	    (defined $@ and $@) and die $@;
 	    _DATABASE_->{$VAR1->name} = $VAR1;
 	}
     }
@@ -267,11 +266,19 @@ sub load_driver
     # try to load driver first
     my $path = "$dir/driver.pl";
     open FP, "<$path" or
-	confess "Can't read-open $path";
-    my $data = join '', <FP>;
+	die "Can't read-open $path";
+
+    # backwards compatibility with mkdoc-1-6
+    my $data = '';
+    while (my $line = <FP>)
+    {
+        next if ($line =~ /^use lib::/);
+        $data .= $line;
+    }
+
     close FP;
     eval $data;
-    (defined $@ and $@) and confess $@;
+    (defined $@ and $@) and die $@;
 }
 
 
@@ -313,7 +320,7 @@ sub not_null
 	for (@_)
 	{
 	    $self->cols ($_) or
-		confess "column $_ does not exist";
+		die "column $_ does not exist";
 	}
 	my $set = { map { $_ => 1 } @_ };
 	foreach my $col ($self->cols)
@@ -383,7 +390,7 @@ sub pk
 	    {
 		# let us check that it's an array
 		(ref $arg eq "ARRAY") or
-		    confess "argument for PK is not an ARRAY reference";
+		    die "argument for PK is not an ARRAY reference";
 		
 		my @pk = @{$arg};
 		
@@ -391,10 +398,10 @@ sub pk
 		foreach my $pk (@pk)
 		{
 		    my $col = $self->cols ($pk);
-		    confess "$pk column does not exist"
+		    die "$pk column does not exist"
 			unless (defined $col);
 		    
-		    confess "$pk must be defined as not null"
+		    die "$pk must be defined as not null"
 			unless ($col->not_null);
 		}
 		
@@ -436,7 +443,7 @@ sub ai
 	    unless (@pk == 1)
 	    {
 		# makes sure that the key ain't composite
-		confess ($self->name . " cannot be auto-increment because its pk is composite");
+		die ($self->name . " cannot be auto-increment because its pk is composite");
 	    }
 	    
 	    # makes sure that the type can be auto_incremented
@@ -445,14 +452,14 @@ sub ai
 	    if ($pk_type->isa ("MKDoc::SQL::Type::AbstractInt")) { $self->{ai} = 1 }
 	    else
 	    {
-		confess ($self->name . "cannot be auto-increment because $pk[0] is not auto-incrementable");
+		die ($self->name . "cannot be auto-increment because $pk[0] is not auto-incrementable");
 	    }
 	}
 	else { $self->{ai} = undef }
     }
     else
     {
-	confess ("ai takes one boolean argument only");
+	die ("ai takes one boolean argument only");
     }
 }
 
@@ -578,7 +585,7 @@ sub fk
     {
 	my $foreign_name = shift;
 	my $foreign = $self->table ($foreign_name) or
-	    confess "Cannot map to $foreign_name because $foreign_name does not exist";
+	    die "Cannot map to $foreign_name because $foreign_name does not exist";
 	my $mapping = undef;
 	if (ref $_[0]) { $mapping = shift  }
 	else           { $mapping = { @_ } }
@@ -589,11 +596,11 @@ sub fk
 	    my $target_col = $mapping->{$source_col};
 	    
 	    my $source_type = $self->cols ($source_col) or
-		confess "Source column $source_col does not exist";
+		die "Source column $source_col does not exist";
 	    my $target_type = $foreign->cols ($target_col) or
-		confess "Target column $target_col does not exist";
+		die "Target column $target_col does not exist";
 	    ($source_type->equals ($target_type)) or
-		confess "$source_col and $target_col have different column types";
+		die "$source_col and $target_col have different column types";
 	}
 	
 	# if the mapping is correct sets it
@@ -670,7 +677,7 @@ sub cols
 	    # if the type is not defined, then we must throw
 	    # an exception
 	    (defined $col_type) or
-		confess "Cannot add a column with undefined type";
+		die "Cannot add a column with undefined type";
 	    
 	    # appends the column
 	    push @{$self->{cols}}, { name => $col_name, type => $col_type }; 
@@ -678,7 +685,7 @@ sub cols
     }
     else
     {
-	confess ("Cannot execute this subroutine with " . scalar @_ . " arguments");
+	die ("Cannot execute this subroutine with " . scalar @_ . " arguments");
     }
     return 1;
 }
@@ -717,7 +724,7 @@ sub get
 	{
 	    my @pk = $self->pk;
 	    (@pk != 1) and
-		confess "Cannot get if primary key is greater than 1";
+		die "Cannot get if primary key is greater than 1";
 	    my $pk = $pk[0];
 	    return $self->get ($pk => shift);
 	}
@@ -800,7 +807,7 @@ sub modify
     # if the current table has no primary keys, then
     # modify cannot be performed.
     my @pk = $self->pk;
-    @pk or confess "The current record cannot be modified because its table has no pk";
+    @pk or die "The current record cannot be modified because its table has no pk";
     
     # $modify may be a reference and is gonna be altered,
     # let us make a copy of it to work onto.
@@ -816,7 +823,7 @@ sub modify
     {
 	unless (defined $condition->{$field})
 	{
-	    confess "One of the condition value is not defined for this modify: $field";
+	    die "One of the condition value is not defined for this modify: $field";
 	}
     }
     
@@ -874,7 +881,7 @@ sub select
 	    {
 		# if the primary key is composite then we cannot build
 		# the condition with a single value, raise an exception
-		confess "COMPOSITE_PK";
+		die "COMPOSITE_PK";
 	    }
 	}
     }
@@ -892,7 +899,7 @@ sub select
 	{
 	    unless (defined $self->cols ($col))
 	    {
-		confess "Cannot sort by $col: this column does not exist";
+		die "Cannot sort by $col: this column does not exist";
 	    }
 	}
     }
@@ -919,7 +926,7 @@ sub delete
     
     unless ($condition_sql)
     {
-	confess "delete cannot be called without a condition, use erase instead";
+	die "delete cannot be called without a condition, use erase instead";
     }
 
     $self->_delete ($condition);
@@ -943,7 +950,7 @@ sub delete_cascade
     
     unless ($condition_sql)
     {
-	confess "delete_cascade cannot be called without a condition, use erase_cascade instead";
+	die "delete_cascade cannot be called without a condition, use erase_cascade instead";
     }
     
     $self->_delete_cascade ($condition);
@@ -986,7 +993,7 @@ sub insert
 	{
 	    unless (defined $insert->{$pk})
 	    {
-		confess "Cannot insert this record: $pk is not defined";
+		die "Cannot insert this record: $pk is not defined";
 	    }
 	}
     }
@@ -1001,7 +1008,7 @@ sub insert
 	{
 	    unless (defined $insert->{$col})
 	    {
-		confess "Cannot insert this record: $col is not defined";
+		die "Cannot insert this record: $col is not defined";
 	    }
 	}
     }
@@ -1016,7 +1023,7 @@ sub insert
 	my $search = { map { $_ => $insert->{$_} } @pk };
         if ($self->search ($search)->next)
 	{
-	    confess "Cannot insert this record: primary key already exists";
+	    die "Cannot insert this record: primary key already exists";
 	}
     }
     
@@ -1028,7 +1035,7 @@ sub insert
 	
         if ($self->search ($search)->next)
 	{
-	    confess "Cannot insert this record: $unique exists";
+	    die "Cannot insert this record: $unique exists";
 	}
     }
     

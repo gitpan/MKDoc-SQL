@@ -20,6 +20,7 @@ EOF
 unless (fork())
 {
     -d 'test' or mkdir 'test' or die "Cannot create test directory";
+    -d 'test/init' or mkdir 'test/init' or die "Cannot create test directory";
     $::SITE_DIR = File::Spec->rel2abs ('test');
     MKDoc::Setup::SQL->new()->process();
 }
@@ -38,6 +39,7 @@ WriteMakefile(
     'PREREQ_PM'		=> {
 	'Test::Harness'	    => '2.00',
 	'Scalar::Util'      => '1.07',
+	'MKDoc::Core'	    => '0.3',
     },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'lib/MKDoc/SQL.pm', # retrieve abstract from module

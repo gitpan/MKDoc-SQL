@@ -11,7 +11,35 @@ use MKDoc::SQL::Query;
 use MKDoc::SQL::Table;
 use MKDoc::SQL::Type::ALL;
 
-our $VERSION = '0.4';
+our $VERSION = '0.5';
+
+
+# this is for backwards compatibility
+# with mkdoc-1-6 sites
+package lib::sql::Category;
+use base qw /MKDoc::SQL::Category/;
+
+package lib::sql::Table;
+use base qw /MKDoc::SQL::Table/;
+
+package lib::sql::type::Char;
+use base qw /MKDoc::SQL::Type::Char/;
+
+package lib::sql::type::DateTime;
+use base qw /MKDoc::SQL::Type::DateTime/;
+
+package lib::sql::type::Int;
+use base qw /MKDoc::SQL::Type::Int/;
+
+package lib::sql::type::Text;
+use base qw /MKDoc::SQL::Type::Text/;
+
+package lib::sql::type::LongText;
+use base qw /MKDoc::SQL::Type::LongText/;
+
+package lib::sql::DBH;
+use base qw /MKDoc::SQL::DBH/;
+
 
 
 =head1 NAME

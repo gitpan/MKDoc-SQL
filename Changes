@@ -1,5 +1,11 @@
 Revision history for MKDoc::SQL 
 
+0.5 Thu Apr  1 17:19:58 2004
+    - Added documentation to MKDoc::Setup::SQL
+    - Increased backwards compatibility with mkdoc-1-6 sites
+    - Changed some confess() into simple die() statements
+    - Renamed MKDoc::Init::DBI to MKDoc::SQL::Init::DBI
+
 0.4 Wed Mar 24 10:38:00 2004 
     - Fixed a newly introduced bug in MKDoc::SQL::DBH
     - Added an instance() accessor in MKDoc::SQL::DBH

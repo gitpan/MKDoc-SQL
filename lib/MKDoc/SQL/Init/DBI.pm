@@ -1,4 +1,4 @@
-package MKDoc::Init::DBI;
+package MKDoc::SQL::Init::DBI;
 use strict;
 use warnings;
 use MKDoc::SQL;
