@@ -11,7 +11,7 @@ use MKDoc::SQL::Query;
 use MKDoc::SQL::Table;
 use MKDoc::SQL::Type::ALL;
 
-our $VERSION = '0.5';
+our $VERSION = '0.6';
 
 
 # this is for backwards compatibility

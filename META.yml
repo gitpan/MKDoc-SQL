@@ -1,10 +1,11 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         MKDoc-SQL
-version:      0.5
+version:      0.6
 version_from: lib/MKDoc/SQL.pm
 installdirs:  site
 requires:
+    Encode:                        1.99
     MKDoc::Core:                   0.3
     Scalar::Util:                  1.07
     Test::Harness:                 2.00

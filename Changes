@@ -1,5 +1,9 @@
 Revision history for MKDoc::SQL 
 
+0.6 Fri Apr 16 13:09:31 2004
+    - Added Encode dependency
+    - Fixed typo in MakeFile.pl
+
 0.5 Thu Apr  1 17:19:58 2004
     - Added documentation to MKDoc::Setup::SQL
     - Increased backwards compatibility with mkdoc-1-6 sites

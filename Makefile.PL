@@ -12,7 +12,7 @@ can cancel the setup - but the extended test suite will be skipped.
 NOTE: For some strange reason on my machine the test suite fails when running
 'make test' but runs smoothly if you run each test independently. Go figure...
 
-Press any key to continue...
+Press Enter to continue...
 EOF
 
 <STDIN>;
@@ -40,6 +40,7 @@ WriteMakefile(
 	'Test::Harness'	    => '2.00',
 	'Scalar::Util'      => '1.07',
 	'MKDoc::Core'	    => '0.3',
+        'Encode'            => '1.99',
     },
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
       (ABSTRACT_FROM => 'lib/MKDoc/SQL.pm', # retrieve abstract from module

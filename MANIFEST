@@ -36,10 +36,10 @@ lib/MKDoc/SQL/Type/TinyInt.pm
 lib/MKDoc/SQL/Type/VarChar.pm
 Makefile.PL
 MANIFEST			This list of files
+META.yml
 README
 t/001_compiles.t
 t/002_category.t
 t/003_category_duplicate_path.t
 t/004_category_duplicate_name.t
 t/005_category_move_stuff_around.t
-META.yml                                 Module meta-data (added by MakeMaker)
