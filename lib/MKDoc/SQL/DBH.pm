@@ -14,8 +14,18 @@ sub spawn
     my $class = shift;
     $class = ref $class || $class;
 
-    $::MKD_SQL_DBH ||= bless { @_ }, $class;
-    return $::MKD_SQL_DBH;
+    $::P_MKD_SQL_DBH_HASH ||= {};
+    my $site_dir = $ENV{SITE_DIR} || 'nositedir';
+
+    $::P_MKD_SQL_DBH_HASH->{$site_dir} ||= bless { @_ }, $class;
+    return $::P_MKD_SQL_DBH_HASH->{$site_dir};
+}
+
+
+sub instance
+{
+    my $self = shift;
+    return $self->get();
 }
 
 

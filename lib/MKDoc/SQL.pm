@@ -11,7 +11,7 @@ use MKDoc::SQL::Query;
 use MKDoc::SQL::Table;
 use MKDoc::SQL::Type::ALL;
 
-our $VERSION = '0.3';
+our $VERSION = '0.4';
 
 
 =head1 NAME

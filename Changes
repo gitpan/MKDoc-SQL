@@ -1,5 +1,9 @@
 Revision history for MKDoc::SQL 
 
+0.4 Wed Mar 24 10:38:00 2004 
+    - Fixed a newly introduced bug in MKDoc::SQL::DBH
+    - Added an instance() accessor in MKDoc::SQL::DBH
+
 0.3 Tue Mar 23 16:59:16 2004
     - Removed MKDoc::SQL::Exception
     - Fixed another bug in MKDoc::SQL::Category
